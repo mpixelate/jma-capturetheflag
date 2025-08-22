@@ -34,6 +34,8 @@ ctf_map = {
 	-- Table of map paths. Indexed by map's folder name
 	-- Doesn't include trailing '/'
 	map_path = {},
+
+	globalstep_function = nil,
 }
 
 function ctf_map.register_map(dirname, path_to_map)
@@ -190,6 +192,30 @@ minetest.register_chatcommand("map", {
 		return true, string.format("The current map is %s by %s. Map duration: %s", mapName, mapAuthor, mapDuration)
 	end
 })
+
+
+minetest.register_globalstep(function(dtime)
+	if ctf_map.globalstep_function then
+		pcall(ctf_map.globalstep_function, dtime)
+	end
+end)
+
+
+ctf_api.register_on_match_end(function()
+	ctf_map.globalstep_function = nil
+end)
+
+
+function ctf_map.set_globalstep_function(globalstep_function)
+    if globalstep_function == nil then
+        ctf_map.globalstep_function = nil
+    elseif type(globalstep_function) == "function" then
+        ctf_map.globalstep_function = globalstep_function
+    else
+        error("globalstep_function must be a function or nil, got " .. type(globalstep_function))
+    end
+end
+
 
 -- Attempt to restore user's time speed after server close
 local TIME_SPEED = minetest.settings:get("time_speed")
